@@ -1,0 +1,12 @@
+python-dotenv
+langchain_community
+langchain_openai
+langchain_core
+streamlit
+langserve
+fastapi
+uvicorn
+sse_starlette
+pinecone
+streamlit-navigation-bar
+boto3

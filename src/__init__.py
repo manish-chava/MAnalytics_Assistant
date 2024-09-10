@@ -1,0 +1,12 @@
+import os
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.document_loaders.pdf import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from pinecone import Pinecone, ServerlessSpec
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+
+from dotenv import load_dotenv
+

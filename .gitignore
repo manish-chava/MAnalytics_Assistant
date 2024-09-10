@@ -1,0 +1,8 @@
+# Avoid all files under the virtual environmnet folder
+mp_venv/
+# Avoid all files under the logs folder
+logs/
+# Avoid all files ending with __pycache__ (* - wildcard)
+*__pycache__
+# Avoid all files ending with .env
+*.env
