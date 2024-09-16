@@ -5,6 +5,7 @@ import streamlit as st
 from scripts.setup import logger
 import requests
 from scripts.setup import session
+import pandas as pd
 
 
 # Responsible for invoking an AWS Lambda function
@@ -79,6 +80,46 @@ def upload_file_to_presigned_url(**kwargs):
     s3_put_req_response = requests.put(presigned_url,data=file_object.read())
 
     return s3_put_req_response
+
+def fetch_metadata(file_obj):
+    df = pd.read_csv(file_obj)
+    metadata = df.dtypes.to_dict()
+    return metadata
+
+def extract_metadata(files):
+    metadata_compliant_file_formats = ['text/csv','application/x-parquet','application/json','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/avro']
+    metadata_compliant_files  = list(filter(lambda file_obj:file_obj.type in metadata_compliant_file_formats,files))
+    file_names = list(map(lambda file_obj: file_obj.name,files))
+    files_metadata = dict.fromkeys(file_names,None)
+
+    # Extracting Metadata
+
+    for file_obj in metadata_compliant_files:
+        files_metadata[file_obj.name] = fetch_metadata(file_obj)
+    return files_metadata
+
+
+def fetch_file_content(file_obj):
+    file_obj_type = file_obj.type 
+    # if file_obj_type == 'text/csv':
+    #     with open(file_obj)
+
+
+    pass
+
+
+def extract_vector_embeddings(embedding_model,files):
+    file_names = list(map(lambda file_obj: file_obj.name),files)
+    files_content = list(map(lambda file_obj: fetch_file_content(file_obj),files))
+    vector_embeddings = embedding_model.embed_documents(files_content)
+    files_vector_embeddings = dict(zip(file_names,vector_embeddings))
+    
+    return files_vector_embeddings
+        
+
+
+
+
 
 
     

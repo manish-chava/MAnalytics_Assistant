@@ -22,6 +22,7 @@ load_dotenv()
 USER_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
 USER_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 USER_REGION = os.getenv("AWS_REGION")
+
 session = boto3.Session(
     aws_access_key_id=USER_ACCESS_KEY,
     aws_secret_access_key = USER_SECRET_ACCESS_KEY,
