@@ -4,6 +4,7 @@ from pinecone import Pinecone, ServerlessSpec
 import os
 import logging
 import boto3
+from langchain_openai import OpenAIEmbeddings
 
 
 # Logging Setup Config
@@ -29,6 +30,9 @@ session = boto3.Session(
     region_name = USER_REGION
 
 )
+
+# Initialising the Open AI embeddings model
+vector_embedding_model = OpenAIEmbeddings()
 
 
 # Connecting to the Pinecone Vector Store DB 

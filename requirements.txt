@@ -11,3 +11,9 @@ pinecone
 streamlit-navigation-bar
 boto3
 pandas
+pyarrow
+openpyxl
+xlrd
+llama-index-core
+llama-parse
+llama-index-readers-file

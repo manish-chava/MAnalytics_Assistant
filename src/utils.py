@@ -6,6 +6,10 @@ from scripts.setup import logger
 import requests
 from scripts.setup import session
 import pandas as pd
+import pyarrow.parquet as pq
+from llama_parse import LlamaParse
+from llama_index.core import SimpleDirectoryReader
+from langchain_community.document_loaders import PyPDFLoader
 
 
 # Responsible for invoking an AWS Lambda function
@@ -82,12 +86,39 @@ def upload_file_to_presigned_url(**kwargs):
     return s3_put_req_response
 
 def fetch_metadata(file_obj):
-    df = pd.read_csv(file_obj)
-    metadata = df.dtypes.to_dict()
+    file_obj.seek(0)
+    metadata = None
+    try:
+        if file_obj.type == 'text/csv':
+
+            df = pd.read_csv(file_obj)
+            metadata = df.dtypes.to_dict()
+        elif file_obj.type == 'application/json':
+            # For JSON files, you may want to parse the JSON and convert to Pandas DataFrame
+            # depending on whether it's a structured JSON object or a list of records
+            json_data = json.load(file_obj)
+            # If it's a list of dictionaries, convert to DataFrame
+            if isinstance(json_data, list):
+                df = pd.json_normalize(json_data)
+                metadata = df.dtypes.to_dict()
+            else:
+                metadata = {key: type(value).__name__ for key, value in json_data.items()}
+            
+        elif file_obj.type in ['application/x-parquet','application/octet-stream']:
+            table = pq.read_table(file_obj)
+            schema = table.schema
+            metadata = { name:str(type_) for name,type_ in zip(schema.names,schema.types)}
+
+        elif file_obj.type in ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel']:
+            df = pd.read_excel(file_obj)
+            metadata = df.dtypes.to_dict()
+    except Exception as e:
+        logger.info(f'Enbcountered an error while fetching the metadata: {e}')
+
     return metadata
 
 def extract_metadata(files):
-    metadata_compliant_file_formats = ['text/csv','application/x-parquet','application/json','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/avro']
+    metadata_compliant_file_formats = ['text/csv','application/x-parquet','application/json','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-excel','application/avro','application/octet-stream']
     metadata_compliant_files  = list(filter(lambda file_obj:file_obj.type in metadata_compliant_file_formats,files))
     file_names = list(map(lambda file_obj: file_obj.name,files))
     files_metadata = dict.fromkeys(file_names,None)
@@ -110,11 +141,21 @@ def fetch_file_content(file_obj):
 
 def extract_vector_embeddings(embedding_model,files):
     file_names = list(map(lambda file_obj: file_obj.name),files)
+    files_content = dict.fromkeys(file_names,None)
+    for file_obj in files:
+        pass
+
     files_content = list(map(lambda file_obj: fetch_file_content(file_obj),files))
     vector_embeddings = embedding_model.embed_documents(files_content)
     files_vector_embeddings = dict(zip(file_names,vector_embeddings))
     
     return files_vector_embeddings
+
+def get_files_content(embedding_model,files):
+
+    files_metadata = extract_metadata(files)
+
+    files_vector_embeddings = extract_vector_embeddings(embedding_model,files)
         
 
 
